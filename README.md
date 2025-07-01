@@ -14,21 +14,13 @@ O projeto segue as etapas propostas pelo desafio "Configuração de Servidor Web
     * [Criar Instância EC2](#criar-instância-ec2)
     * [Configurar Security Group](#configurar-security-group)
     * [Acessar a Instância via SSH](#acessar-a-instância-via-ssh)
-    * [**Solução de Problemas: Erro de Conexão SSH / "Failed to connect"**](#solução-de-problemas-erro-de-conexão-ssh--failed-to-connect)
-    * [**Dica: Como Manter o IP Público Fixo (Elastic IP)**](#dica-como-manter-o-ip-público-fixo-elastic-ip)
 3.  [Etapa 2: Configuração do Servidor Web (Nginx)](#3-etapa-2-configuração-do-servidor-web-nginx)
     * [Instalar Nginx](#instalar-nginx)
     * [Criar Página HTML Personalizada](#criar-página-html-personalizada)
     * [Configurar Nginx para Servir a Página](#configurar-nginx-para-servir-a-página)
     * [Configurar Nginx para Reinício Automático (systemd)](#configurar-nginx-para-reinício-automático-systemd)
-    * [**Solução de Problemas: "Network is unreachable" ao instalar Nginx**](#solução-de-problemas-network-is-unreachable-ao-instalar-nginx)
-    * [**Solução de Problemas: Nginx Falha ao Iniciar / "unexpected {"**](#solução-de-problemas-nginx-falha-ao-iniciar--unexpected)
-    * [**Solução de Problemas: Nginx Apresenta Página Padrão**](#solução-de-problemas-nginx-apresenta-página-padrão)
-    * [**Solução de Problemas: Erro ao Parar Nginx / "Unit nginx.service does not exist"**](#solução-de-problemas-erro-ao-parar-nginx--unit-nginxservice-does-not-exist)
 4.  [Etapa 3: Monitoramento e Notificações](#4-etapa-3-monitoramento-e-notificações)
     * [Criar Script de Monitoramento](#criar-script-de-monitoramento)
-    * [Configurar Cron Job](#configurar-cron-job)
-    * [**Solução de Problemas: Notificação Discord Não Funciona**](#solução-de-problemas-notificação-discord-não-funciona)
 5.  [Etapa 4: Testes e Documentação](#5-etapa-4-testes-e-documentação)
 
 ---
@@ -124,24 +116,6 @@ Nesta etapa, configuramos a infraestrutura de rede na AWS para nossa instância 
     ssh -i "nome-da-sua-chave.pem" ubuntu@SEU_IP_PUBLICO_EC2
     ```
     (Use `ubuntu` para AMIs Ubuntu. Para Amazon Linux, use `ec2-user`).
-
-#### **Solução de Problemas: Erro de Conexão SSH / "Failed to connect"**
-
-* **Causa:** Geralmente, o Security Group não permite SSH do seu IP, ou a instância ainda não está totalmente inicializada.
-* **Solução:**
-    1.  Aguarde 1-2 minutos após a instância mudar para "running".
-    2.  Verifique novamente as **Regras de Entrada do Security Group (`nginx-sg`)**: Confirme se há uma regra para **SSH (porta 22)** com **Origem "My IP"** ou `0.0.0.0/0`.
-
-#### **Dica: Como Manter o IP Público Fixo (Elastic IP)**
-
-O IP público da EC2 é dinâmico por padrão e muda cada vez que a instância é parada e iniciada. Para ter um IP fixo:
-
-1.  No console da AWS, vá para **EC2** > **Elastic IPs**.
-2.  Clique em **"Alocar endereço Elastic IP"**.
-3.  Após alocar, selecione o EIP, clique em **"Ações"** > **"Associar endereço Elastic IP"**.
-4.  Selecione sua **Instância** e seu **endereço IP privado** (interno da instância).
-5.  Clique em **"Associar"**.
-    * **Atenção:** Elastic IPs são cobrados se não estiverem associados a uma instância **em execução**. Se a instância for parada ou o EIP não estiver associado, ele gerará custos.
 
 ## 3. Etapa 2: Configuração do Servidor Web (Nginx)
 
@@ -257,53 +231,6 @@ Para garantir que o Nginx reinicie automaticamente em caso de falha:
     ```bash
     sudo systemctl restart nginx
     ```
-
-#### **Solução de Problemas: "Network is unreachable" ao instalar Nginx**
-
-* **Causa:** A instância EC2 não consegue acessar a internet para baixar pacotes, geralmente devido a problemas de rota ou Security Group de saída.
-* **Solução:**
-    1.  **Verifique a Tabela de Rotas da sub-rede pública:** No console AWS (VPC > Sub-redes > selecione sua sub-rede pública > Tabela de rotas), certifique-se de que há uma rota para `0.0.0.0/0` apontando para o seu Internet Gateway (IGW). Se não houver, adicione-a.
-    2.  **Verifique se o Internet Gateway está anexado:** No console AWS (VPC > Gateways de Internet), confirme se seu IGW está anexado à sua VPC.
-    3.  **Verifique as Regras de Saída (Outbound Rules) do Security Group:** No console AWS (EC2 > Instâncias > Security Group > Regras de saída), garanta que haja uma regra permitindo **"All traffic" para `0.0.0.0/0`**.
-
-#### **Solução de Problemas: Nginx Falha ao Iniciar / "unexpected {"**
-
-* **Causa:** Erro de sintaxe no arquivo de configuração do Nginx, frequentemente na primeira linha do arquivo.
-* **Solução:**
-    1.  Execute `sudo systemctl status nginx.service` para obter a mensagem de erro detalhada, que indica o arquivo e a linha do erro.
-    2.  Use `sudo nano /etc/nginx/sites-enabled/teste` (ou o arquivo indicado no erro) para editar o arquivo.
-    3.  Corrija o erro na linha indicada (ex: remover um `{` inesperado ou outro caractere antes do bloco `server {`).
-    4.  Execute `sudo nginx -t` para testar a sintaxe (deve retornar `syntax is ok`).
-    5.  Execute `sudo systemctl restart nginx` para tentar iniciar o serviço.
-
-#### **Solução de Problemas: Nginx Apresenta Página Padrão**
-
-* **Causa:** O Nginx ainda está servindo sua página padrão (`/var/www/html/index.nginx-debian.html`) em vez da sua página personalizada. Isso ocorre porque o site padrão está habilitado ou o `server_name` na sua configuração personalizada não corresponde à requisição.
-* **Solução:**
-    1.  **Desabilitar o site padrão (recomendado):**
-        ```bash
-        sudo unlink /etc/nginx/sites-enabled/default
-        sudo systemctl restart nginx
-        ```
-    2.  **Alternativamente, configure o `server_name` no seu arquivo `teste`** (`/etc/nginx/sites-enabled/teste`) para o IP público da sua instância ou domínio, como no exemplo acima.
-
-#### **Solução de Problemas: Erro ao Parar Nginx / "Unit nginx.service does not exist"**
-
-* **Causa:** O `systemd` não consegue encontrar ou carregar o arquivo de serviço do Nginx, apesar de ele existir. Isso pode ser um problema de cache do `systemd` ou uma instalação incompleta.
-* **Solução:**
-    1.  **Recarregar o daemon do systemd:**
-        ```bash
-        sudo systemctl daemon-reload
-        ```
-    2.  Tente `sudo systemctl status nginx` e `sudo systemctl restart nginx` novamente.
-    3.  **Se o problema persistir, a reinstalação é o próximo passo:**
-        ```bash
-        sudo apt purge nginx nginx-common nginx-full # Cuidado: remove configs
-        sudo apt autoremove
-        sudo apt update
-        sudo apt install nginx
-        ```
-        Após a reinstalação, o serviço deve ser reconhecido.
 
 ## 4. Etapa 3: Monitoramento e Notificações
 
