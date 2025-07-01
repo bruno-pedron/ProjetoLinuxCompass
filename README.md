@@ -94,8 +94,7 @@ Nesta etapa, configuramos a infraestrutura de rede na AWS para nossa instância 
     * **Sub-rede:** `publica-subnet-az1` (ou `publica-subnet-az2`).
     * **Atribuir IP público automaticamente:** **Habilitar**.
 6.  **Adicionar Armazenamento:** Padrão (8 GiB).
-7.  **Adicionar Tags:** `Nome: NginxServer` (opcional).
-8.  **Configurar Grupo de Segurança:**
+7.  **Adicionar Tags:**
 
 ### Configurar Security Group
 
