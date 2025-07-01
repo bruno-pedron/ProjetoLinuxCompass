@@ -2,7 +2,7 @@
 
 Este repositório documenta a configuração de um servidor web Nginx em uma instância EC2 da AWS, incluindo a criação da infraestrutura de rede (VPC), o deploy de uma página HTML personalizada e um script de monitoramento com notificações via webhook.
 
-[cite_start]O projeto segue as etapas propostas pelo desafio "Configuração de Servidor Web com Monitoramento" da Turma de PB ABR 2025 - Programa de Bolsas DevSecOps[cite: 24, 25, 26].
+O projeto segue as etapas propostas pelo desafio "Configuração de Servidor Web com Monitoramento" da Turma de PB ABR 2025 - Programa de Bolsas DevSecOps.
 
 ## Tabela de Conteúdo
 
@@ -35,29 +35,29 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
 
 ## 1. Visão Geral do Projeto
 
-[cite_start]Este projeto tem como objetivo desenvolver e testar habilidades em Linux, AWS e automação, configurando um ambiente de servidor web monitorado[cite: 25, 26]. As principais etapas incluem:
-* [cite_start]Configuração de ambiente de rede (VPC, sub-redes, Internet Gateway). [cite: 7]
-* [cite_start]Deploy de uma instância EC2 com Ubuntu. [cite: 8, 33, 34]
-* [cite_start]Instalação e configuração de um servidor web Nginx para exibir uma página HTML personalizada. [cite: 10, 11, 40, 41, 42]
-* [cite_start]Criação de um script Bash para monitorar a disponibilidade do site a cada minuto, com logs e envio de notificações via webhook (Discord/Telegram/Slack) em caso de indisponibilidade. [cite: 13, 14, 50, 51, 52, 53]
-* [cite_start]Testes de implementação e documentação no GitHub. [cite: 16, 17, 61, 62, 63, 64, 65]
+Este projeto tem como objetivo desenvolver e testar habilidades em Linux, AWS e automação, configurando um ambiente de servidor web monitorado. As principais etapas incluem:
+* Configuração de ambiente de rede (VPC, sub-redes, Internet Gateway).
+* Deploy de uma instância EC2 com Ubuntu.
+* Instalação e configuração de um servidor web Nginx para exibir uma página HTML personalizada.
+* Criação de um script Bash para monitorar a disponibilidade do site a cada minuto, com logs e envio de notificações via webhook (Discord/Telegram/Slack) em caso de indisponibilidade.
+* Testes de implementação e documentação no GitHub.
 
 ## 2. Etapa 1: Configuração do Ambiente na AWS
 
-[cite_start]Nesta etapa, configuramos a infraestrutura de rede na AWS para nossa instância EC2. [cite: 6, 27]
+Nesta etapa, configuramos a infraestrutura de rede na AWS para nossa instância EC2.
 
-### [cite_start]Criar VPC e Sub-redes [cite: 7, 29]
+### Criar VPC e Sub-redes
 
 1.  No console da AWS, navegue até o serviço **VPC**.
 2.  Clique em "VPCs" e depois em "Criar VPC".
 3.  **Nome:** `minha-vpc-nginx`
 4.  **Bloco CIDR IPv4:** `10.0.0.0/16`
 5.  Clique em **Criar VPC**.
-6.  [cite_start]Em "Sub-redes", clique em "Criar sub-rede" e crie 4 sub-redes: [cite: 7, 30, 31]
-    * [cite_start]**publica-subnet-az1:** VPC `minha-vpc-nginx`, AZ `sa-east-1a`, CIDR `10.0.1.0/24` [cite: 30]
-    * [cite_start]**publica-subnet-az2:** VPC `minha-vpc-nginx`, AZ `sa-east-1b`, CIDR `10.0.2.0/24` [cite: 30]
-    * [cite_start]**privada-subnet-az1:** VPC `minha-vpc-nginx`, AZ `sa-east-1a`, CIDR `10.0.3.0/24` [cite: 31]
-    * [cite_start]**privada-subnet-az2:** VPC `minha-vpc-nginx`, AZ `sa-east-1b`, CIDR `10.0.4.0/24` [cite: 31]
+6.  Em "Sub-redes", clique em "Criar sub-rede" e crie 4 sub-redes:
+    * **publica-subnet-az1:** VPC `minha-vpc-nginx`, AZ `sa-east-1a`, CIDR `10.0.1.0/24`
+    * **publica-subnet-az2:** VPC `minha-vpc-nginx`, AZ `sa-east-1b`, CIDR `10.0.2.0/24`
+    * **privada-subnet-az1:** VPC `minha-vpc-nginx`, AZ `sa-east-1a`, CIDR `10.0.3.0/24`
+    * **privada-subnet-az2:** VPC `minha-vpc-nginx`, AZ `sa-east-1b`, CIDR `10.0.4.0/24`
 
 ### Criar Internet Gateway
 
@@ -83,33 +83,33 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
 6.  Marque `publica-subnet-az1` e `publica-subnet-az2`.
 7.  Clique em **Salvar associações**.
 
-### [cite_start]Criar Instância EC2 [cite: 8, 33, 34, 35]
+### Criar Instância EC2
 
 1.  No console da AWS, navegue até o serviço **EC2**.
 2.  Clique em "Instâncias" e depois em "Executar instâncias".
-3.  [cite_start]**Escolha uma AMI:** "Ubuntu Server 22.04 LTS (HVM), SSD Volume Type". [cite: 34]
+3.  **Escolha uma AMI:** "Ubuntu Server 22.04 LTS (HVM), SSD Volume Type".
 4.  **Escolha o Tipo de Instância:** `t2.micro` (gratuito).
 5.  **Configurar Detalhes da Instância:**
     * **Rede:** `minha-vpc-nginx`
-    * [cite_start]**Sub-rede:** `publica-subnet-az1` (ou `publica-subnet-az2`). [cite: 35]
+    * **Sub-rede:** `publica-subnet-az1` (ou `publica-subnet-az2`).
     * **Atribuir IP público automaticamente:** **Habilitar**.
 6.  **Adicionar Armazenamento:** Padrão (8 GiB).
 7.  **Adicionar Tags:** `Nome: NginxServer` (opcional).
-8.  [cite_start]**Configurar Grupo de Segurança:** [cite: 36]
+8.  **Configurar Grupo de Segurança:**
 
-### [cite_start]Configurar Security Group [cite: 36]
+### Configurar Security Group
 
 1.  **Crie um novo Security Group:**
     * **Nome do grupo de segurança:** `nginx-sg`
     * **Descrição:** `Security Group para Nginx server`
-    * [cite_start]**Regras de entrada (Inbound Rules):** [cite: 36]
+    * **Regras de entrada (Inbound Rules):**
         * **Tipo: SSH**, **Porta: 22**, **Fonte: Meu IP** (recomendado para SSH) ou `0.0.0.0/0`.
         * **Tipo: HTTP**, **Porta: 80**, **Fonte: 0.0.0.0/0** (para acesso público ao site).
     * **Regras de saída (Outbound Rules):**
         * Certifique-se de que há uma regra padrão: **Tipo: All traffic**, **Destino: 0.0.0.0/0**. (Isso é crucial para que a instância possa acessar a internet para atualizações e downloads).
-2.  **Revisar e Executar:** Escolha ou crie um novo par de chaves (Key Pair) e faça o download do arquivo `.pem`. [cite_start]Guarde-o em segurança. [cite: 37]
+2.  **Revisar e Executar:** Escolha ou crie um novo par de chaves (Key Pair) e faça o download do arquivo `.pem`. Guarde-o em segurança.
 
-### [cite_start]Acessar a Instância via SSH [cite: 37]
+### Acessar a Instância via SSH
 
 1.  **Obtenha o IP Público da Instância:** No console EC2, selecione sua instância e copie o **IP IPv4 público** ou o **DNS IPv4 público**.
 2.  **Abra o Terminal (Windows PowerShell/CMD, Linux/macOS Terminal).**
@@ -126,11 +126,29 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
     ```
     (Use `ubuntu` para AMIs Ubuntu. Para Amazon Linux, use `ec2-user`).
 
-## [cite_start]3. Etapa 2: Configuração do Servidor Web (Nginx) [cite: 9]
+#### **Solução de Problemas: Erro de Conexão SSH / "Failed to connect"**
 
-[cite_start]Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML. [cite: 10, 40]
+* **Causa:** Geralmente, o Security Group não permite SSH do seu IP, ou a instância ainda não está totalmente inicializada.
+* **Solução:**
+    1.  Aguarde 1-2 minutos após a instância mudar para "running".
+    2.  Verifique novamente as **Regras de Entrada do Security Group (`nginx-sg`)**: Confirme se há uma regra para **SSH (porta 22)** com **Origem "My IP"** ou `0.0.0.0/0`.
 
-### [cite_start]Instalar Nginx [cite: 10, 40]
+#### **Dica: Como Manter o IP Público Fixo (Elastic IP)**
+
+O IP público da EC2 é dinâmico por padrão e muda cada vez que a instância é parada e iniciada. Para ter um IP fixo:
+
+1.  No console da AWS, vá para **EC2** > **Elastic IPs**.
+2.  Clique em **"Alocar endereço Elastic IP"**.
+3.  Após alocar, selecione o EIP, clique em **"Ações"** > **"Associar endereço Elastic IP"**.
+4.  Selecione sua **Instância** e seu **endereço IP privado** (interno da instância).
+5.  Clique em **"Associar"**.
+    * **Atenção:** Elastic IPs são cobrados se não estiverem associados a uma instância **em execução**. Se a instância for parada ou o EIP não estiver associado, ele gerará custos.
+
+## 3. Etapa 2: Configuração do Servidor Web (Nginx)
+
+Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
+
+### Instalar Nginx
 
 1.  **Atualize os pacotes do sistema:**
     ```bash
@@ -141,7 +159,7 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
     sudo apt install nginx
     ```
 
-### [cite_start]Criar Página HTML Personalizada [cite: 11, 41]
+### Criar Página HTML Personalizada
 
 1.  Crie um diretório para seu site e a página `index.html`:
     ```bash
@@ -170,7 +188,8 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
     </body>
     </html>
     ```
-### [cite_start]Configurar Nginx para Servir a Página [cite: 42]
+
+### Configurar Nginx para Servir a Página
 
 1.  **Desabilite o site padrão do Nginx** para evitar conflitos e garantir que sua configuração seja usada:
     ```bash
@@ -187,6 +206,8 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
         listen 80;      # Porta padrão HTTP
         listen [::]:80; # Para IPv6
 
+        # Se você estiver usando um Elastic IP ou um domínio, coloque-o aqui.
+        # Caso contrário, o Nginx responderá para o IP da instância.
         server_name SEU_IP_PUBLICO_EC2; # Ex: 18.222.81.222, ou seu domínio (ex: example.ubuntu.com)
 
         root /var/www/teste;  # Caminho para sua página HTML
@@ -197,6 +218,11 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
         }
     }
     ```
+4.  **Teste a sintaxe do Nginx:**
+    ```bash
+    sudo nginx -t
+    ```
+    Deve retornar `syntax is ok` e `test is successful`.
 5.  **Reinicie o Nginx para aplicar as alterações:**
     ```bash
     sudo systemctl restart nginx
@@ -207,7 +233,7 @@ Este repositório documenta a configuração de um servidor web Nginx em uma ins
     ```
     Deve mostrar `Active: active (running)`.
 
-### [cite_start]Configurar Nginx para Reinício Automático (systemd) [cite: 45]
+### Configurar Nginx para Reinício Automático (systemd)
 
 Para garantir que o Nginx reinicie automaticamente em caso de falha:
 
@@ -233,11 +259,58 @@ Para garantir que o Nginx reinicie automaticamente em caso de falha:
     sudo systemctl restart nginx
     ```
 
-## [cite_start]4. Etapa 3: Monitoramento e Notificações [cite: 12]
+#### **Solução de Problemas: "Network is unreachable" ao instalar Nginx**
 
-[cite_start]Nesta etapa, criamos um script para monitorar o site e enviar alertas. [cite: 13, 48, 49]
+* **Causa:** A instância EC2 não consegue acessar a internet para baixar pacotes, geralmente devido a problemas de rota ou Security Group de saída.
+* **Solução:**
+    1.  **Verifique a Tabela de Rotas da sub-rede pública:** No console AWS (VPC > Sub-redes > selecione sua sub-rede pública > Tabela de rotas), certifique-se de que há uma rota para `0.0.0.0/0` apontando para o seu Internet Gateway (IGW). Se não houver, adicione-a.
+    2.  **Verifique se o Internet Gateway está anexado:** No console AWS (VPC > Gateways de Internet), confirme se seu IGW está anexado à sua VPC.
+    3.  **Verifique as Regras de Saída (Outbound Rules) do Security Group:** No console AWS (EC2 > Instâncias > Security Group > Regras de saída), garanta que haja uma regra permitindo **"All traffic" para `0.0.0.0/0`**.
 
-### [cite_start]Criar Script de Monitoramento [cite: 13, 14, 50, 51]
+#### **Solução de Problemas: Nginx Falha ao Iniciar / "unexpected {"**
+
+* **Causa:** Erro de sintaxe no arquivo de configuração do Nginx, frequentemente na primeira linha do arquivo.
+* **Solução:**
+    1.  Execute `sudo systemctl status nginx.service` para obter a mensagem de erro detalhada, que indica o arquivo e a linha do erro.
+    2.  Use `sudo nano /etc/nginx/sites-enabled/teste` (ou o arquivo indicado no erro) para editar o arquivo.
+    3.  Corrija o erro na linha indicada (ex: remover um `{` inesperado ou outro caractere antes do bloco `server {`).
+    4.  Execute `sudo nginx -t` para testar a sintaxe (deve retornar `syntax is ok`).
+    5.  Execute `sudo systemctl restart nginx` para tentar iniciar o serviço.
+
+#### **Solução de Problemas: Nginx Apresenta Página Padrão**
+
+* **Causa:** O Nginx ainda está servindo sua página padrão (`/var/www/html/index.nginx-debian.html`) em vez da sua página personalizada. Isso ocorre porque o site padrão está habilitado ou o `server_name` na sua configuração personalizada não corresponde à requisição.
+* **Solução:**
+    1.  **Desabilitar o site padrão (recomendado):**
+        ```bash
+        sudo unlink /etc/nginx/sites-enabled/default
+        sudo systemctl restart nginx
+        ```
+    2.  **Alternativamente, configure o `server_name` no seu arquivo `teste`** (`/etc/nginx/sites-enabled/teste`) para o IP público da sua instância ou domínio, como no exemplo acima.
+
+#### **Solução de Problemas: Erro ao Parar Nginx / "Unit nginx.service does not exist"**
+
+* **Causa:** O `systemd` não consegue encontrar ou carregar o arquivo de serviço do Nginx, apesar de ele existir. Isso pode ser um problema de cache do `systemd` ou uma instalação incompleta.
+* **Solução:**
+    1.  **Recarregar o daemon do systemd:**
+        ```bash
+        sudo systemctl daemon-reload
+        ```
+    2.  Tente `sudo systemctl status nginx` e `sudo systemctl restart nginx` novamente.
+    3.  **Se o problema persistir, a reinstalação é o próximo passo:**
+        ```bash
+        sudo apt purge nginx nginx-common nginx-full # Cuidado: remove configs
+        sudo apt autoremove
+        sudo apt update
+        sudo apt install nginx
+        ```
+        Após a reinstalação, o serviço deve ser reconhecido.
+
+## 4. Etapa 3: Monitoramento e Notificações
+
+Nesta etapa, criamos um script para monitorar o site e enviar alertas.
+
+### Criar Script de Monitoramento
 
 1.  Crie o arquivo do script:
     ```bash
@@ -262,7 +335,6 @@ Para garantir que o Nginx reinicie automaticamente em caso de falha:
       # O -s (silent) suprime a barra de progresso, -o /dev/null descarta a saída,
       # -w (write out) permite formatar a saída. No entanto, para webhooks,
       # não precisamos da saída, apenas que a requisição seja feita.
-      # Removendo -s -o /dev/null -w "%{http_code}" para ver erros mais claros se houver.
       /usr/bin/curl -H "Content-Type: application/json" -X POST -d "{\"content\":\"$MESSAGE\"}" "$DISCORD_WEBHOOK_URL"
     }
 
@@ -302,8 +374,8 @@ Para garantir que o Nginx reinicie automaticamente em caso de falha:
       send_notification "$MESSAGE"
     fi
     ```
-    * [cite_start]**ATENÇÃO:** Altere `SITE_URL` para o IP **fixo** da sua instância (Elastic IP) e a porta correta (80 ou 81). [cite: 52, 53]
-    * [cite_start]**ATENÇÃO:** Substitua `SUA_WEBHOOK_DO_DISCORD_AQUI` pela URL real do seu webhook do Discord. [cite: 53, 57]
+    * **ATENÇÃO:** Altere `SITE_URL` para o IP **fixo** da sua instância (Elastic IP) e a porta correta (80 ou 81).
+    * **ATENÇÃO:** Substitua `SUA_WEBHOOK_DO_DISCORD_AQUI` pela URL real do seu webhook do Discord.
 
 3.  **Dê permissão de execução ao script:**
     ```bash
@@ -313,26 +385,25 @@ Para garantir que o Nginx reinicie automaticamente em caso de falha:
     ```bash
     /home/ubuntu/monitora_site.sh install-cron
     ```
-## [cite_start]5. Etapa 4: Testes e Documentação [cite: 15, 16]
 
-### [cite_start]Testes da Implementação [cite: 16, 61]
+## 5. Etapa 4: Testes e Documentação
+
+### Testes da Implementação
 
 1.  **Acessibilidade do Site:**
     * Abra seu navegador e digite `http://SEU_IP_PUBLICO_OU_ELASTIC_IP` (ou com a porta se for diferente de 80).
-    * [cite_start]Verifique se sua página HTML personalizada é exibida corretamente. [cite: 62]
-2.  [cite_start]**Teste de Monitoramento (Parada do Nginx):** [cite: 63]
+    * Verifique se sua página HTML personalizada é exibida corretamente.
+2.  **Teste de Monitoramento (Parada do Nginx):**
     * No terminal da sua instância EC2, pare o Nginx: `sudo systemctl stop nginx`.
     * Aguarde 1-2 minutos (o tempo do cron).
-    * [cite_start]Verifique o `/var/log/monitoramento.log` para ver as mensagens de "ALERTA: Site INDISPONÍVEL!". [cite: 64]
-    * [cite_start]Verifique se a notificação chegou no seu canal do Discord (ou Telegram/Slack). [cite: 64]
+    * Verifique o `/var/log/monitoramento.log` para ver as mensagens de "ALERTA: Site INDISPONÍVEL!".
+    * Verifique se a notificação chegou no seu canal do Discord (ou Telegram/Slack).
     * Inicie o Nginx novamente: `sudo systemctl start nginx`. O script deve registrar que o site voltou a ficar "DISPONÍVEL".
 
-### [cite_start]Documentação no GitHub [cite: 17, 65]
+### Documentação no GitHub
 
 Este arquivo `README.md` serve como a documentação do projeto, explicando:
-* [cite_start]A configuração do ambiente AWS. [cite: 66]
-* [cite_start]A instalação e configuração do servidor web Nginx. [cite: 67]
-* [cite_start]O funcionamento do script de monitoramento. [cite: 68]
-* [cite_start]Os testes e a validação da solução. [cite: 69]
-
----
+* A configuração do ambiente AWS.
+* A instalação e configuração do servidor web Nginx.
+* O funcionamento do script de monitoramento.
+* Os testes e a validação da solução.
