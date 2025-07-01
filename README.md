@@ -2,7 +2,7 @@
 
 Este repositório documenta a configuração de um servidor web Nginx em uma instância EC2 da AWS, incluindo a criação da infraestrutura de rede (VPC), o deploy de uma página HTML personalizada e um script de monitoramento com notificações via webhook.
 
-O projeto segue as etapas propostas pelo desafio "Configuração de Servidor Web com Monitoramento" da Turma de PB ABR 2025 - Programa de Bolsas DevSecOps.
+O projeto segue as etapas propostas pelo desafio "Configuração de Servidor Web com Monitoramento" da Turma de PB JUN 2025 - Programa de Bolsas DevSecOps.
 
 ## Tabela de Conteúdo
 
@@ -144,23 +144,62 @@ Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
     ```
 2.  Dentro do `vi` (ou `nano`), insira seu código HTML. Exemplo:
     ```html
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Meu Primeiro Site Nginx na AWS</title>
-        <style>
-            body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f0f0f0; }
-            h1 { color: #333; }
-            p { color: #666; }
-        </style>
-    </head>
-    <body>
-        <h1>Olá do Projeto Linux Compass!</h1>
-        <p>Esta é a minha página web customizada servida pelo Nginx na AWS EC2.</p>
-        <p>Data e Hora: <script>document.write(new Date().toLocaleString());</script></p>
-    </body>
-    </html>
-    ```
+    <!doctype html>
+      <html>
+      <head>
+    <meta charset="utf-8">
+    <title>Projeto Linux + Servidores Compass UOL</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #000000; /* Dark purple/blue from Compass UOL branding */
+            color: #FFFFFF; /* White text for contrast */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+        .container {
+            background-color: rgba(50, 50, 50, 0.8); /* Slightly transparent white for content box */
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            margin: 20px;
+        }
+        .logo-placeholder {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #FA4616; /* Orange accent from Compass UOL branding */
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        h1 {
+            color: #FA4616; /* Orange accent for headings */
+            font-size: 2.2em;
+            margin-bottom: 15px;
+        }
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+    </style>
+      </head>
+      <body>
+       <div class="container">
+        <div class="logo-placeholder">Compass UOL</div>
+        <h1>Projeto Linux + Servidores</h1>
+        <p>Este HTML foi criado para a apresentação do projeto de linux + servidores da <strong>Compass UOL</strong>, desenvolvido por <strong>Bruno Pedron Rupaner</strong>.</p>
+        <p>O projeto aborda a implementação e gestão de ambientes baseados em sistemas operacionais Linux, otimizando o desempenho e a segurança de servidores. Utilizamos as melhores práticas de mercado para garantir uma infraestrutura robusta e escalável.</p>
+       </div>
+      </body>
+      </html>
 
 ### Configurar Nginx para Servir a Página
 
@@ -172,15 +211,12 @@ Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
     ```bash
     sudo nano /etc/nginx/sites-enabled/teste
     ```
-    (Note: É comum criar em `/etc/nginx/sites-available/` e depois linkar para `sites-enabled`, mas criar diretamente em `sites-enabled` também funciona para um único site).
 3.  **Insira a seguinte configuração:**
     ```nginx
     server {
         listen 80;      # Porta padrão HTTP
         listen [::]:80; # Para IPv6
 
-        # Se você estiver usando um Elastic IP ou um domínio, coloque-o aqui.
-        # Caso contrário, o Nginx responderá para o IP da instância.
         server_name SEU_IP_PUBLICO_EC2; # Ex: 18.222.81.222, ou seu domínio (ex: example.ubuntu.com)
 
         root /var/www/teste;  # Caminho para sua página HTML
@@ -191,21 +227,10 @@ Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
         }
     }
     ```
-4.  **Teste a sintaxe do Nginx:**
-    ```bash
-    sudo nginx -t
-    ```
-    Deve retornar `syntax is ok` e `test is successful`.
-5.  **Reinicie o Nginx para aplicar as alterações:**
+4.  **Reinicie o Nginx para aplicar as alterações:**
     ```bash
     sudo systemctl restart nginx
     ```
-6.  **Verifique o status do Nginx:**
-    ```bash
-    sudo systemctl status nginx
-    ```
-    Deve mostrar `Active: active (running)`.
-
 ### Configurar Nginx para Reinício Automático (systemd)
 
 Para garantir que o Nginx reinicie automaticamente em caso de falha:
@@ -249,25 +274,21 @@ Nesta etapa, criamos um script para monitorar o site e enviar alertas.
     #!/bin/bash
 
     # --- VARIÁVEIS DE CONFIGURAÇÃO ---
-    SITE_URL="http://SEU_IP_PUBLICO_OU_ELASTIC_IP:80" # ATUALIZE para o seu IP fixo (Elastic IP) e porta.
+    SITE_URL="http://SEU_IP_PUBLICO:80" # ATUALIZE para o seu IP público e porta.
     LOG_FILE="/var/log/monitoramento.log"
-    DISCORD_WEBHOOK_URL="SUA_WEBHOOK_DO_DISCORD_AQUI" # SUBSTITUA pela sua URL do webhook do Discord/Telegram/Slack.
+    DISCORD_WEBHOOK_URL="SUA_WEBHOOK_DO_DISCORD_AQUI" # SUBSTITUA pela sua URL do webhook do Discord.
 
     # --- FUNÇÕES ---
 
     # Função para enviar notificação (adaptável para Discord, Telegram, Slack)
     send_notification() {
       MESSAGE="$1"
-      # O -s (silent) suprime a barra de progresso, -o /dev/null descarta a saída,
-      # -w (write out) permite formatar a saída. No entanto, para webhooks,
-      # não precisamos da saída, apenas que a requisição seja feita.
       /usr/bin/curl -H "Content-Type: application/json" -X POST -d "{\"content\":\"$MESSAGE\"}" "$DISCORD_WEBHOOK_URL"
     }
 
     # Função para instalar a tarefa no crontab
     install_cron_job() {
       if ! /usr/bin/crontab -l 2>/dev/null | /usr/bin/grep -q "/home/ubuntu/monitora_site.sh"; then
-        # Adiciona a tarefa cron para rodar a cada 1 minuto
         (/usr/bin/crontab -l 2>/dev/null; echo "* * * * * /bin/bash /home/ubuntu/monitora_site.sh >> /dev/null 2>&1") | /usr/bin/crontab -
         echo "Tarefa cron adicionada para 'monitora_site.sh' em /home/ubuntu/."
       else
@@ -279,7 +300,6 @@ Nesta etapa, criamos um script para monitorar o site e enviar alertas.
 
     # Garante que o arquivo de log exista e com as permissões corretas
     /usr/bin/touch "$LOG_FILE"
-    /usr/bin/chmod 644 "$LOG_FILE" # Garante permissões de leitura para outros usuários, útil para debugging
 
     # Se o script for chamado com "install-cron", apenas instala a tarefa cron e sai.
     if [[ "$1" == "install-cron" ]]; then
@@ -300,8 +320,6 @@ Nesta etapa, criamos um script para monitorar o site e enviar alertas.
       send_notification "$MESSAGE"
     fi
     ```
-    * **ATENÇÃO:** Altere `SITE_URL` para o IP **fixo** da sua instância (Elastic IP) e a porta correta (80 ou 81).
-    * **ATENÇÃO:** Substitua `SUA_WEBHOOK_DO_DISCORD_AQUI` pela URL real do seu webhook do Discord.
 
 3.  **Dê permissão de execução ao script:**
     ```bash
@@ -317,7 +335,7 @@ Nesta etapa, criamos um script para monitorar o site e enviar alertas.
 ### Testes da Implementação
 
 1.  **Acessibilidade do Site:**
-    * Abra seu navegador e digite `http://SEU_IP_PUBLICO_OU_ELASTIC_IP` (ou com a porta se for diferente de 80).
+    * Abra seu navegador e digite `http://SEU_IP_PUBLICO`.
     * Verifique se sua página HTML personalizada é exibida corretamente.
 2.  **Teste de Monitoramento (Parada do Nginx):**
     * No terminal da sua instância EC2, pare o Nginx: `sudo systemctl stop nginx`.
