@@ -154,8 +154,8 @@ Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #000000; /* Dark purple/blue from Compass UOL branding */
-            color: #FFFFFF; /* White text for contrast */
+            background-color: #000000;
+            color: #FFFFFF;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -164,7 +164,7 @@ Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
             text-align: center;
         }
         .container {
-            background-color: rgba(50, 50, 50, 0.8); /* Slightly transparent white for content box */
+            background-color: rgba(50, 50, 50, 0.8);
             padding: 40px;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -174,13 +174,13 @@ Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
         .logo-placeholder {
             font-size: 2.5em;
             font-weight: bold;
-            color: #FA4616; /* Orange accent from Compass UOL branding */
+            color: #FA4616;
             margin-bottom: 20px;
             text-transform: uppercase;
             letter-spacing: 2px;
         }
         h1 {
-            color: #FA4616; /* Orange accent for headings */
+            color: #FA4616;
             font-size: 2.2em;
             margin-bottom: 15px;
         }
