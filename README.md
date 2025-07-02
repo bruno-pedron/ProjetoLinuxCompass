@@ -217,7 +217,7 @@ Nesta etapa, instalamos e configuramos o Nginx para servir nossa página HTML.
         listen 80;      # Porta padrão HTTP
         listen [::]:80; # Para IPv6
 
-        server_name SEU_IP_PUBLICO_EC2; # Ex: 18.222.81.222, ou seu domínio (ex: example.ubuntu.com)
+        server_name example.ubuntu.com;
 
         root /var/www/teste;  # Caminho para sua página HTML
         index index.html;     # Nome do arquivo principal
